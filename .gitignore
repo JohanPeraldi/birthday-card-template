@@ -5,6 +5,12 @@ node_modules/
 # production build
 dist/
 
+# Ignore compiled scripts
+dist-scripts/
+
+# Ignore generated birthday card page
+src/pages/BirthdayCard.tsx
+
 # IDE / editor
 .vscode/
 .idea/

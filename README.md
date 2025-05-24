@@ -1,6 +1,6 @@
 # 🎉 Birthday Card Template
 
-A beautifully animated, customizable digital birthday card generator built with React, TypeScript, and framer-motion — perfect for sending someone special a delightful surprise!
+A customizable birthday card template built with React and TypeScript, designed to be generated and customized via scripts.
 
 ---
 
@@ -14,6 +14,11 @@ A beautifully animated, customizable digital birthday card generator built with 
 ---
 
 ## 🚀 Getting Started
+
+### 0. Prerequisites
+
+- Node.js (v16 or newer recommended)
+- pnpm or npm
 
 ### 1. Clone the Template
 
@@ -60,7 +65,17 @@ Run the following to generate your personalized card:
 pnpm run generate
 ```
 
-This compiles the card with your config and outputs it in the `dist` folder.
+This will generate a `BirthdayCard.tsx` file in the `src/pages/` folder based on your template and configuration.
+
+---
+
+## 📁 Project Structure and Generated Files
+
+- The `src/pages/` folder **must exist and be committed** to your repository. It acts as the target location for generated birthday card components.
+- When you run the generate script, it will create or overwrite the `BirthdayCard.tsx` file inside `src/pages/`.
+- **Do not commit the generated `BirthdayCard.tsx` or any other generated files** inside `src/pages/`. These are build outputs and can be recreated anytime by running the generation script.
+
+Make sure to keep `src/pages/` in your repo even if it’s initially empty to avoid errors.
 
 ---
 
@@ -86,6 +101,13 @@ Your card is now ready in the `dist` folder to deploy or share!
 
 ---
 
+## 🚫 Ignored Files
+
+- The `dist-scripts/` folder contains compiled scripts and **should be added to `.gitignore`**.
+- Generated files inside `src/pages/` like `BirthdayCard.tsx` should **not** be committed.
+
+---
+
 ## 🛠️ Tech Stack
 
 - [React](https://reactjs.org/)
@@ -107,9 +129,9 @@ Feel free to fork and submit pull requests if you want to add features like:
 
 ---
 
-## 🥳 License
+## © License
 
-MIT — free for personal and commercial use.
+MIT © Johan Peraldi — Free for personal and commercial use.
 
 ---
 
