@@ -18,6 +18,12 @@ const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
 const { title, recipient, image, message } = config;
 
+// Generate a unique identifier for this card configuration
+const cardId = Buffer.from(`${recipient}-${Date.now()}`)
+  .toString('base64')
+  .replace(/[+=\/]/g, '')
+  .substring(0, 12);
+
 const generatedComponent = `// AUTO-GENERATED. DO NOT EDIT.
 // To update this file, edit card.config.json and run: pnpm run generate
 
@@ -66,6 +72,16 @@ export default function BirthdayCard() {
   const [isMuted, setIsMuted] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // Get configuration from environment variables (set at build time)
+  const cardConfig = {
+    title: import.meta.env.VITE_CARD_TITLE || '${title}',
+    recipient: import.meta.env.VITE_CARD_RECIPIENT || '${recipient}',
+    image: import.meta.env.VITE_CARD_IMAGE || '${image}',
+    message: import.meta.env.VITE_CARD_MESSAGE ? 
+      JSON.parse(import.meta.env.VITE_CARD_MESSAGE) : 
+      ${JSON.stringify(message)}
+  };
+
   const [play, { stop }] = useSound('/happy-birthday.mp3', {
     volume: 0.5,
     interrupt: true,
@@ -110,14 +126,11 @@ export default function BirthdayCard() {
               <AnimatePresence>
                 {isOpen && (
                   <motion.div className="h-full flex flex-col items-center justify-center p-8 space-y-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <motion.img src="${image}" alt="Birthday" className="rounded-lg shadow-md max-w-[300px] object-cover" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.5 }} />
-                    <h2 className="font-['Playfair_Display'] text-2xl text-primary text-center">${title}</h2>
-                    ${message
-                      .map(
-                        (p: string) =>
-                          `<p className="text-center text-gray-700 leading-relaxed">${p}</p>`
-                      )
-                      .join('\n')}
+                    <motion.img src={cardConfig.image} alt="Birthday" className="rounded-lg shadow-md max-w-[300px] object-cover" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.5 }} />
+                    <h2 className="font-['Playfair_Display'] text-2xl text-primary text-center">{cardConfig.title}</h2>
+                    {cardConfig.message.map((line: string, index: number) => (
+                      <p key={index} className="text-center text-gray-700 leading-relaxed">{line}</p>
+                    ))}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -130,7 +143,7 @@ export default function BirthdayCard() {
             <div className="absolute inset-0 [backface-visibility:hidden] rounded-2xl shadow-2xl overflow-hidden" style={decorative}>
               <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center p-8 space-y-6">
                 <PartyPopper className="w-12 h-12 text-yellow-500 animate-pulse" />
-                <h1 className="font-['Dancing_Script'] text-5xl text-primary text-center">Happy <span className="block">birthday</span> ${recipient}!</h1>
+                <h1 className="font-['Dancing_Script'] text-5xl text-primary text-center">Happy <span className="block">birthday</span> {cardConfig.recipient}!</h1>
                 <div className="flex gap-4">
                   <Cake className="w-6 h-6 text-pink-500 animate-pulse" />
                   <Stars className="w-6 h-6 text-yellow-500 animate-pulse" />
@@ -151,4 +164,32 @@ export default function BirthdayCard() {
 `;
 
 fs.writeFileSync(outputPath, generatedComponent);
+
+// Also create a deployment configuration file
+const deployConfigPath = path.resolve(__dirname, '../.env.example');
+const deployConfig = `# Birthday Card Configuration
+# Copy this to .env.local for local development
+# Set these as environment variables in Vercel/Netlify for deployment
+
+VITE_CARD_TITLE="${title}"
+VITE_CARD_RECIPIENT="${recipient}"
+VITE_CARD_IMAGE="${image}"
+VITE_CARD_MESSAGE='${JSON.stringify(message)}'
+
+# Unique card identifier (for multiple deployments)
+VITE_CARD_ID="${cardId}"
+`;
+
+fs.writeFileSync(deployConfigPath, deployConfig);
+
 console.log(`✅ BirthdayCard.tsx generated from card.config.json`);
+console.log(`📝 Environment config created: .env.example`);
+console.log(`🆔 Card ID: ${cardId}`);
+console.log(`\n🚀 Next steps:`);
+console.log(`1. Copy .env.example to .env.local for local testing`);
+console.log(`2. Set environment variables in Vercel/Netlify:`);
+console.log(`   VITE_CARD_TITLE="${title}"`);
+console.log(`   VITE_CARD_RECIPIENT="${recipient}"`);
+console.log(`   VITE_CARD_IMAGE="${image}"`);
+console.log(`   VITE_CARD_MESSAGE='${JSON.stringify(message)}'`);
+console.log(`3. Deploy to get your private birthday card URL`);

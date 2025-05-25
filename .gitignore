@@ -11,6 +11,10 @@ dist-scripts/
 # Ignore generated birthday card page
 src/pages/BirthdayCard.tsx
 
+# Environment variables
+.env
+.env.local
+
 # IDE / editor
 .vscode/
 .idea/
