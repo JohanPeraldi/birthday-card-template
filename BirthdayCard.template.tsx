@@ -60,66 +60,73 @@ const QRCodeGate = ({ onAuthenticated, config }: QRCodeGateProps) => {
 
   const validateQRCode = async (token: string) => {
     try {
-      // Check if we're in development mode
-      const isDev =
-        window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1';
+      console.log('🔍 Validating QR token:', token);
 
-      if (isDev) {
-        // Development mode - simple validation
-        console.log('🔓 Development mode: Validating QR token...', token);
+      // Decode the QR token
+      const decoded = atob(token);
+      console.log('📦 Decoded QR data:', decoded);
 
-        try {
-          const decoded = atob(token);
-          if (decoded.includes(config.cardId)) {
-            console.log('✅ Development QR token validated successfully');
-            setIsScanned(true);
-            // Clean URL
-            window.history.replaceState(
-              {},
-              document.title,
-              window.location.pathname
-            );
-            // Small delay for UX
-            setTimeout(() => onAuthenticated(), 1000);
-            return;
-          }
-        } catch (e) {
-          console.log('❌ Development QR token validation failed');
-        }
+      const parts = decoded.split(':');
+      if (parts.length !== 2) {
+        console.log(
+          '❌ Invalid QR token format - expected 2 parts, got:',
+          parts.length
+        );
+        return;
       }
 
-      // Production mode - would validate with API
+      const [cardId, timestamp] = parts;
+
+      // Check if cardId matches
+      if (cardId !== config.cardId) {
+        console.log(
+          '❌ Card ID mismatch. Expected:',
+          config.cardId,
+          'Got:',
+          cardId
+        );
+        return;
+      }
+
+      // Check if token is not too old (24 hours for QR codes)
+      const tokenAge = Date.now() - parseInt(timestamp);
+      const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+
+      if (tokenAge > maxAge) {
+        console.log(
+          '❌ QR token expired. Age:',
+          Math.round(tokenAge / 1000 / 60),
+          'minutes'
+        );
+        return;
+      }
+
+      console.log('✅ QR token validated successfully');
       setIsScanned(true);
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Small delay for UX
       setTimeout(() => onAuthenticated(), 1000);
     } catch (error) {
-      console.error('QR validation failed:', error);
+      console.error('❌ QR validation failed:', error);
     }
   };
 
   const generateQRCode = () => {
     // Generate QR code using a free service (qr-server.com)
     const timestamp = Date.now();
-    const qrToken = btoa(`${config.cardId}:${timestamp}`).substring(0, 16);
+    // Create a simple QR token (different from magic link tokens)
+    const qrData = `${config.cardId}:${timestamp}`;
+    const qrToken = btoa(qrData);
 
-    // Check if we're in development
-    const isDev =
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1';
+    // Ensure we use the correct base URL
+    const baseUrl = window.location.origin;
+    const fullPath = window.location.pathname;
+    const qrUrl = `${baseUrl}${fullPath}?qr=${qrToken}`;
 
-    let qrUrl;
-    if (isDev) {
-      // In development, create a URL that works when copied/shared
-      // This simulates what the production URL would look like
-      qrUrl = `${window.location.origin}${window.location.pathname}?qr=${qrToken}`;
-      console.log('🔗 Development QR Code URL (copy this to test):', qrUrl);
-      console.log(
-        '📱 To test: Copy the URL above and paste it in your browser'
-      );
-    } else {
-      // Production URL
-      qrUrl = `${window.location.origin}${window.location.pathname}?qr=${qrToken}`;
-    }
+    console.log('🔗 QR Code URL:', qrUrl);
+    console.log('🎫 QR Token:', qrToken);
+    console.log('📦 QR Data:', qrData);
 
     // Generate QR code image URL using qr-server.com (free service)
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
