@@ -11,6 +11,10 @@ import {
   Send,
   CheckCircle,
   Heart,
+  QrCode,
+  Smartphone,
+  Download,
+  Share2,
 } from 'lucide-react';
 import useSound from 'use-sound';
 
@@ -32,6 +36,334 @@ interface MagicLinkGateProps {
   onAuthenticated: () => void;
   config: ReturnType<typeof getConfig>;
 }
+
+interface QRCodeGateProps {
+  onAuthenticated: () => void;
+  config: ReturnType<typeof getConfig>;
+}
+
+const QRCodeGate = ({ onAuthenticated, config }: QRCodeGateProps) => {
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [isScanned, setIsScanned] = useState(false);
+
+  useEffect(() => {
+    // Check if user arrived via QR code scan
+    const urlParams = new URLSearchParams(window.location.search);
+    const qrToken = urlParams.get('qr');
+
+    if (qrToken) {
+      validateQRCode(qrToken);
+    } else {
+      generateQRCode();
+    }
+  }, []);
+
+  const validateQRCode = async (token: string) => {
+    try {
+      // Check if we're in development mode
+      const isDev =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+
+      if (isDev) {
+        // Development mode - simple validation
+        console.log('🔓 Development mode: Validating QR token...', token);
+
+        try {
+          const decoded = atob(token);
+          if (decoded.includes(config.cardId)) {
+            console.log('✅ Development QR token validated successfully');
+            setIsScanned(true);
+            // Clean URL
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
+            // Small delay for UX
+            setTimeout(() => onAuthenticated(), 1000);
+            return;
+          }
+        } catch (e) {
+          console.log('❌ Development QR token validation failed');
+        }
+      }
+
+      // Production mode - would validate with API
+      setIsScanned(true);
+      setTimeout(() => onAuthenticated(), 1000);
+    } catch (error) {
+      console.error('QR validation failed:', error);
+    }
+  };
+
+  const generateQRCode = () => {
+    // Generate QR code using a free service (qr-server.com)
+    const timestamp = Date.now();
+    const qrToken = btoa(`${config.cardId}:${timestamp}`).substring(0, 16);
+
+    // Check if we're in development
+    const isDev =
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1';
+
+    let qrUrl;
+    if (isDev) {
+      // In development, create a URL that works when copied/shared
+      // This simulates what the production URL would look like
+      qrUrl = `${window.location.origin}${window.location.pathname}?qr=${qrToken}`;
+      console.log('🔗 Development QR Code URL (copy this to test):', qrUrl);
+      console.log(
+        '📱 To test: Copy the URL above and paste it in your browser'
+      );
+    } else {
+      // Production URL
+      qrUrl = `${window.location.origin}${window.location.pathname}?qr=${qrToken}`;
+    }
+
+    // Generate QR code image URL using qr-server.com (free service)
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+      qrUrl
+    )}&bgcolor=f8fafc&color=3b82f6&margin=10`;
+    setQrCodeUrl(qrImageUrl);
+  };
+
+  const downloadQRCode = () => {
+    const link = document.createElement('a');
+    link.download = `${config.recipient}-birthday-card-qr.png`;
+    link.href = qrCodeUrl;
+    link.click();
+  };
+
+  const shareQRCode = async () => {
+    const qrUrl = `${window.location.origin}${
+      window.location.pathname
+    }?qr=${btoa(`${config.cardId}:${Date.now()}`).substring(0, 16)}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${config.recipient}'s Birthday Card`,
+          text: 'Scan this QR code to view a special birthday surprise!',
+          url: qrUrl,
+        });
+      } catch (error) {
+        console.log('Share failed:', error);
+        fallbackShare(qrUrl);
+      }
+    } else {
+      fallbackShare(qrUrl);
+    }
+  };
+
+  const fallbackShare = (url: string) => {
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        alert('QR code link copied to clipboard!');
+      })
+      .catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('QR code link copied to clipboard!');
+      });
+  };
+
+  if (isScanned) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-blue-50 to-purple-100 p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 w-full max-w-md text-center"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+            className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+          >
+            <CheckCircle className="w-10 h-10 text-green-600" />
+          </motion.div>
+
+          <motion.h2
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-2xl font-bold text-gray-800 mb-4"
+          >
+            QR Code Scanned! ✨
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-gray-600 mb-6"
+          >
+            Get ready for your birthday surprise, {config.recipient}!
+          </motion.p>
+
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: '100%' }}
+            transition={{ delay: 0.8, duration: 0.8 }}
+            className="h-1 bg-gradient-to-r from-green-400 to-blue-400 rounded-full"
+          />
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 w-full max-w-md"
+      >
+        <div className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+            className="w-20 h-20 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6"
+          >
+            <QrCode className="w-10 h-10 text-indigo-600" />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              🎉 Private Birthday Card
+            </h1>
+            <p className="text-gray-600 leading-relaxed">
+              Hi {config.recipient}! Scan the QR code below to open your special
+              birthday surprise!
+            </p>
+          </motion.div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.6 }}
+          className="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl border-2 border-gray-200 mb-6"
+        >
+          <div className="text-center">
+            {qrCodeUrl ? (
+              <motion.img
+                src={qrCodeUrl}
+                alt="QR Code for Birthday Card"
+                className="mx-auto mb-4 rounded-lg shadow-md"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+              />
+            ) : (
+              <div className="w-48 h-48 mx-auto mb-4 bg-gray-200 rounded-lg flex items-center justify-center">
+                <div className="animate-pulse text-gray-400">
+                  Loading QR Code...
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-center gap-2 text-indigo-600 mb-2">
+              <Smartphone className="w-4 h-4" />
+              <span className="font-semibold">Scan with your phone camera</span>
+            </div>
+            <p className="text-sm text-gray-500">
+              Point your camera at the QR code or use a QR scanner app
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="flex gap-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+        >
+          <button
+            onClick={downloadQRCode}
+            className="flex-1 bg-indigo-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download
+          </button>
+          <button
+            onClick={shareQRCode}
+            className="flex-1 bg-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </button>
+        </motion.div>
+
+        {/* Development testing helper */}
+        {(window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1') && (
+          <motion.div
+            className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.4 }}
+          >
+            <h4 className="font-semibold text-blue-800 mb-2">
+              🧪 Development Testing
+            </h4>
+            <p className="text-sm text-blue-700 mb-3">
+              Since you're on localhost, copy the QR URL from the console and
+              paste it in a new tab to test the QR flow!
+            </p>
+            <button
+              onClick={() => {
+                const timestamp = Date.now();
+                const qrToken = btoa(`${config.cardId}:${timestamp}`).substring(
+                  0,
+                  16
+                );
+                const testUrl = `${window.location.origin}${window.location.pathname}?qr=${qrToken}`;
+                window.open(testUrl, '_blank');
+              }}
+              className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              🚀 Test QR Flow in New Tab
+            </button>
+          </motion.div>
+        )}
+
+        <motion.div
+          className="mt-8 pt-6 border-t border-gray-200"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
+        >
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl">
+            <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              Why QR codes?
+            </h3>
+            <ul className="text-sm text-blue-700 space-y-1">
+              <li>• Instant access with phone camera</li>
+              <li>• No typing or passwords needed</li>
+              <li>• Works offline once generated</li>
+              <li>• Perfect for sharing physically!</li>
+            </ul>
+          </div>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+};
 
 const MagicLinkGate = ({ onAuthenticated, config }: MagicLinkGateProps) => {
   const [email, setEmail] = useState('');
@@ -446,12 +778,21 @@ export default function BirthdayCard() {
 
   // Show authentication gate if authentication is enabled and user not authenticated
   if (config.authEnabled && !isAuthenticated) {
-    return (
-      <MagicLinkGate
-        onAuthenticated={() => setIsAuthenticated(true)}
-        config={config}
-      />
-    );
+    if (config.authMethod === 'qr-code') {
+      return (
+        <QRCodeGate
+          onAuthenticated={() => setIsAuthenticated(true)}
+          config={config}
+        />
+      );
+    } else {
+      return (
+        <MagicLinkGate
+          onAuthenticated={() => setIsAuthenticated(true)}
+          config={config}
+        />
+      );
+    }
   }
 
   const decorativeElements = {

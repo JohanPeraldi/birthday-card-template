@@ -9,7 +9,7 @@
   ],
   "authentication": {
     "enabled": true,
-    "method": "magic-link",
+    "method": "qr-code",
     "cardId": "sarah-25th-birthday-2025"
   }
 }
