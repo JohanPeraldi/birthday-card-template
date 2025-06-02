@@ -2,6 +2,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 
+// Token blacklist (in production, use Redis or database)
+const usedTokens = new Set<string>();
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -43,11 +46,18 @@ function verifyMagicLinkToken(
   maxAge: number = 15 * 60 * 1000
 ): boolean {
   try {
+    // Check if token was already used (prevents replay attacks)
+    if (usedTokens.has(token)) {
+      console.log('Token already used - preventing replay attack');
+      return false;
+    }
+
     // Decode the token
     const decoded = Buffer.from(token, 'base64url').toString();
     const parts = decoded.split(':');
 
     if (parts.length < 4) {
+      console.log('Invalid token format');
       return false;
     }
 
@@ -55,12 +65,14 @@ function verifyMagicLinkToken(
 
     // Check if cardId matches
     if (cardId !== expectedCardId) {
+      console.log('Card ID mismatch');
       return false;
     }
 
     // Check if token is expired
     const tokenAge = Date.now() - parseInt(timestamp);
     if (tokenAge > maxAge) {
+      console.log('Token expired');
       return false;
     }
 
@@ -72,7 +84,17 @@ function verifyMagicLinkToken(
       .update(data)
       .digest('hex');
 
-    return signature === expectedSignature;
+    const isValid = signature === expectedSignature;
+
+    if (isValid) {
+      // Mark token as used to prevent reuse
+      usedTokens.add(token);
+      console.log('Token verified and marked as used');
+    } else {
+      console.log('Invalid signature');
+    }
+
+    return isValid;
   } catch (error) {
     console.error('Token verification error:', error);
     return false;
