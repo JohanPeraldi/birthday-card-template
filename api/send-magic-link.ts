@@ -22,7 +22,7 @@ class ResendEmailService implements EmailService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Birthday Cards <noreply@yourdomain.com>', // Replace with your domain
+        from: 'Birthday Cards <noreply@resend.dev>',
         to: [to],
         subject,
         html,
@@ -188,7 +188,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({
       error: 'Failed to send magic link',
       details:
-        process.env.NODE_ENV === 'development' ? error.message : undefined,
+        process.env.NODE_ENV === 'development' ? String(error) : undefined,
     });
   }
 }
