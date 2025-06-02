@@ -66,9 +66,11 @@ function generateMagicLinkToken(email: string, cardId: string): string {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Debugging
-  console.log('🔍 API called with method:', req.method);
-  console.log('🔍 Request body:', req.body);
+  console.log('🔍 Magic link API called');
+  console.log('🔍 Method:', req.method);
+  console.log('🔍 Body:', JSON.stringify(req.body));
   console.log('🔍 RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
+  console.log('🔍 RESEND_API_KEY length:', process.env.RESEND_API_KEY?.length);
 
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -85,6 +87,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { email, cardId, recipientName } = req.body;
+    console.log('🔍 Parsed email:', email);
+    console.log('🔍 Parsed cardId:', cardId);
 
     if (!email || !cardId) {
       return res.status(400).json({ error: 'Email and cardId are required' });
@@ -165,38 +169,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Send email (only if API key is configured)
     if (process.env.RESEND_API_KEY) {
-      console.log('🔍 About to send email to:', email);
+      console.log('🔍 About to create EmailService');
       const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
-      try {
-        await emailService.sendEmail(
-          email,
-          `🎉 ${
-            recipientName ? `${recipientName}, your` : 'Your'
-          } Birthday Surprise Awaits!`,
-          emailHtml
-        );
-        console.log('✅ Email sent successfully');
-        return res.status(200).json({
-          success: true,
-          message: 'Magic link sent successfully!',
-        });
-      } catch (emailError) {
-        console.error('❌ Email sending failed:', emailError);
-        throw emailError;
-      }
-    } else {
-      console.log('❌ No RESEND_API_KEY found');
-      // Development mode - return the link
-      console.log('🔗 Magic Link (no email service configured):', magicLink);
 
+      console.log('🔍 About to send email to:', email);
+      await emailService.sendEmail(
+        email,
+        `🎉 ${
+          recipientName ? `${recipientName}, your` : 'Your'
+        } Birthday Surprise Awaits!`,
+        emailHtml
+      );
+
+      console.log('✅ Email API call completed successfully');
       return res.status(200).json({
         success: true,
-        message: 'Magic link generated (check console in development)',
-        ...(process.env.NODE_ENV === 'development' && { magicLink }),
+        message: 'Magic link sent successfully!',
       });
+    } else {
+      console.log('❌ RESEND_API_KEY not found');
     }
   } catch (error) {
-    console.error('Error sending magic link:', error);
+    console.error('❌ Error in magic link handler:', error);
     return res.status(500).json({
       error: 'Failed to send magic link',
       details:
