@@ -1,6 +1,15 @@
 {
-  "title": "Happy birthday!",
-  "recipient": "Jane",
+  "title": "Happy 25th Birthday!",
+  "recipient": "Sarah",
   "image": "/happy-birthday.jpeg",
-  "message": ["Your message here", "XXXX 🎂 🎁 🎈 🥳 😘", "Your name here"]
+  "message": [
+    "Hope your special day is amazing! 🎂",
+    "Wishing you all the happiness in the world ✨",
+    "Love from your friends and family ❤️"
+  ],
+  "authentication": {
+    "enabled": true,
+    "method": "magic-link",
+    "cardId": "sarah-25th-birthday-2025"
+  }
 }
