@@ -1,6 +1,6 @@
 {
-  "title": "Happy 25th Birthday!",
-  "recipient": "Sarah",
+  "title": "Happy 49th Birthday!",
+  "recipient": "Teddy",
   "image": "/happy-birthday.jpeg",
   "message": [
     "Hope your special day is amazing! 🎂",
@@ -9,7 +9,7 @@
   ],
   "authentication": {
     "enabled": true,
-    "method": "qr-code",
-    "cardId": "sarah-25th-birthday-2025"
+    "method": "magic-link",
+    "cardId": "teddy-49th-birthday-2025"
   }
 }
