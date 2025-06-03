@@ -22,7 +22,7 @@ class ResendEmailService implements EmailService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Birthday Cards <noreply@resend.dev>',
+        from: 'Birthday Surprise <surprise@bday.top>',
         to: [to],
         subject,
         html,
