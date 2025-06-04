@@ -110,11 +110,37 @@ export default function BirthdayCardCreator() {
   // Store card data in localStorage with unique ID
   const storeCardData = (cardId: string, cardData: any) => {
     try {
-      localStorage.setItem(`card_${cardId}`, JSON.stringify(cardData));
-      console.log('💾 Card data stored in localStorage with ID:', cardId);
-      return true;
+      console.log('💾 Attempting to store card data:', cardId);
+
+      // Check if localStorage is available
+      if (typeof Storage === 'undefined') {
+        console.error('❌ localStorage is not supported in this browser');
+        return false;
+      }
+
+      // Try to store the data
+      const dataString = JSON.stringify(cardData);
+      console.log('💾 Data string length:', dataString.length);
+
+      localStorage.setItem(`card_${cardId}`, dataString);
+      console.log('💾 Data stored successfully');
+
+      // Verify storage
+      const retrieved = localStorage.getItem(`card_${cardId}`);
+      if (retrieved) {
+        console.log('✅ Storage verification successful');
+        return true;
+      } else {
+        console.error('❌ Storage verification failed');
+        return false;
+      }
     } catch (error) {
-      console.error('❌ Failed to store card data:', error);
+      console.error('❌ Error storing card data:', error);
+      console.error('❌ Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+      });
       return false;
     }
   };
@@ -123,6 +149,13 @@ export default function BirthdayCardCreator() {
     setIsGenerating(true);
 
     try {
+      console.log('🔍 Debug Info:', {
+        hostname: window.location.hostname,
+        localStorage_available: typeof Storage !== 'undefined',
+        isDevelopment:
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1',
+      });
       // Generate a shorter, cleaner card ID
       const timestamp = Date.now();
       const randomSuffix = Math.random().toString(36).substring(2, 8);
@@ -131,6 +164,8 @@ export default function BirthdayCardCreator() {
         .replace(/[^a-z0-9]/g, '')
         .substring(0, 8);
       const cardId = `${cleanName}${randomSuffix}`;
+
+      console.log('🎂 Generated card ID:', cardId);
 
       // Prepare card data
       const cardData = {
@@ -152,6 +187,11 @@ export default function BirthdayCardCreator() {
         createdAt: new Date().toISOString(),
       };
 
+      console.log('🎂 Card data prepared:', {
+        ...cardData,
+        image: cardData.image ? 'IMAGE_PRESENT' : 'NO_IMAGE',
+      });
+
       console.log('🎂 Creating birthday card...', {
         cardId,
         deliveryMethod: cardData.deliveryMethod,
@@ -159,6 +199,7 @@ export default function BirthdayCardCreator() {
 
       // Store card data in localStorage (for development)
       const stored = storeCardData(cardId, cardData);
+      console.log('💾 localStorage storage result:', stored);
       if (!stored) {
         throw new Error('Failed to store card data');
       }
@@ -168,6 +209,8 @@ export default function BirthdayCardCreator() {
         window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1';
 
+      console.log('🔍 Environment check - isDevelopment:', isDevelopment);
+
       if (isDevelopment) {
         // Mock API response for development
         console.log('🔧 Development mode: Mocking API response');
@@ -175,6 +218,7 @@ export default function BirthdayCardCreator() {
         // Create clean card URL - no parameters in URL
         const baseUrl = window.location.origin;
         const cardUrl = `${baseUrl}/card/${cardId}`;
+        console.log('🔗 Generated card URL:', cardUrl);
 
         // Generate QR code for QR delivery method
         let qrCodeData = null;
@@ -183,7 +227,8 @@ export default function BirthdayCardCreator() {
           const qrToken = btoa(`${cardId}:${qrTimestamp}`);
           const qrUrl = `${cardUrl}?qr=${qrToken}`;
 
-          console.log('📱 QR Code URL (shorter):', qrUrl);
+          console.log('📱 QR Code URL generated:', qrUrl);
+          console.log('📱 QR Token:', qrToken);
 
           qrCodeData = {
             url: qrUrl,
@@ -192,6 +237,8 @@ export default function BirthdayCardCreator() {
               qrUrl
             )}&bgcolor=ffffff&color=000000&margin=20&format=png`,
           };
+
+          console.log('📱 QR Code data:', qrCodeData);
         }
 
         // Generate magic link for magic-link delivery method
@@ -202,7 +249,7 @@ export default function BirthdayCardCreator() {
             `${cardId}:${magicTimestamp}:${recipientEmail}`
           );
           magicLinkData = `${cardUrl}?token=${magicToken}`;
-          console.log('🔗 Magic Link (shorter):', magicLinkData);
+          console.log('🔗 Magic Link generated:', magicLinkData);
         }
 
         // Mock successful response
@@ -223,12 +270,19 @@ export default function BirthdayCardCreator() {
           }),
         };
 
+        console.log('✅ Mock result prepared:', mockResult);
+
         // Simulate API delay
+        console.log('⏳ Simulating API delay...');
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
+        console.log('🎉 Setting generated card state...');
         setGeneratedCard(mockResult);
-        console.log('✅ Development card created successfully!', mockResult);
+        console.log('✅ Card creation completed successfully!');
       } else {
+        console.log(
+          '🌍 Production mode: Should call real API (but localStorage version will mock it)'
+        );
         // Production mode: Call real API
         const response = await fetch('/api/create-card', {
           method: 'POST',
@@ -248,9 +302,14 @@ export default function BirthdayCardCreator() {
         }
       }
     } catch (error) {
-      console.error('❌ Error creating card:', error);
+      console.error('❌ Error in generateCard:', error);
+      console.error(
+        '❌ Error stack:',
+        error instanceof Error ? error.stack : 'No stack trace'
+      );
       alert('Failed to create birthday card. Please try again!');
     } finally {
+      console.log('🔄 Setting isGenerating to false');
       setIsGenerating(false);
     }
   };
