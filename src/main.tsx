@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import BirthdayCard from '@/pages/BirthdayCard';
+import App from './App';
 import '@/index.css';
 
-createRoot(document.getElementById('root')!).render(<BirthdayCard />);
+createRoot(document.getElementById('root')!).render(<App />);
