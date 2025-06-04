@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User,
@@ -34,6 +34,37 @@ export default function BirthdayCardCreator() {
 
   // Drag and drop state
   const [isDragging, setIsDragging] = useState(false);
+
+  // Add this debugging useEffect to track state changes
+  useEffect(() => {
+    console.log('🔍 generatedCard state changed:', generatedCard);
+    if (generatedCard) {
+      console.log('✅ GeneratedCard is truthy, success screen should show');
+      console.log('✅ GeneratedCard details:', {
+        success: generatedCard.success,
+        cardId: generatedCard.cardId,
+        cardUrl: generatedCard.cardUrl,
+        hasQrCode: !!generatedCard.qrCode,
+        hasMagicLink: !!generatedCard.magicLink,
+      });
+    } else {
+      console.log('❌ GeneratedCard is falsy, form should show');
+    }
+  }, [generatedCard]);
+
+  // Also add this to force a re-render after setting the state
+  const forceGeneratedCardUpdate = (cardData: any) => {
+    console.log('🔄 Force updating generatedCard state...');
+
+    // First set to null to ensure a change is detected
+    setGeneratedCard(null);
+
+    // Then set the actual data in the next tick
+    setTimeout(() => {
+      console.log('🔄 Setting generatedCard to:', cardData);
+      setGeneratedCard(cardData);
+    }, 10);
+  };
 
   const themes = [
     {
@@ -290,7 +321,7 @@ export default function BirthdayCardCreator() {
       console.log('🎉 Setting generated card state...');
       console.log('🎉 About to call setGeneratedCard with:', mockResult);
 
-      setGeneratedCard(mockResult);
+      forceGeneratedCardUpdate(mockResult);
 
       // Add a small delay to verify state was set
       setTimeout(() => {
