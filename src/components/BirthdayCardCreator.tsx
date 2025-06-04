@@ -147,6 +147,7 @@ export default function BirthdayCardCreator() {
 
   const generateCard = async () => {
     setIsGenerating(true);
+    console.log('🚀 Starting generateCard function');
 
     try {
       console.log('🔍 Debug Info:', {
@@ -156,6 +157,7 @@ export default function BirthdayCardCreator() {
           window.location.hostname === 'localhost' ||
           window.location.hostname === '127.0.0.1',
       });
+
       // Generate a shorter, cleaner card ID
       const timestamp = Date.now();
       const randomSuffix = Math.random().toString(36).substring(2, 8);
@@ -191,123 +193,123 @@ export default function BirthdayCardCreator() {
         ...cardData,
         image: cardData.image ? 'IMAGE_PRESENT' : 'NO_IMAGE',
       });
-
       console.log('🎂 Creating birthday card...', {
         cardId,
         deliveryMethod: cardData.deliveryMethod,
       });
 
-      // Store card data in localStorage (for development)
+      // Try to store card data in localStorage
       const stored = storeCardData(cardId, cardData);
       console.log('💾 localStorage storage result:', stored);
+
       if (!stored) {
-        throw new Error('Failed to store card data');
+        throw new Error('Failed to store card data in localStorage');
       }
 
       // Check if we're in development mode
       const isDevelopment =
         window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1';
-
       console.log('🔍 Environment check - isDevelopment:', isDevelopment);
 
       if (isDevelopment) {
-        // Mock API response for development
         console.log('🔧 Development mode: Mocking API response');
-
-        // Create clean card URL - no parameters in URL
-        const baseUrl = window.location.origin;
-        const cardUrl = `${baseUrl}/card/${cardId}`;
-        console.log('🔗 Generated card URL:', cardUrl);
-
-        // Generate QR code for QR delivery method
-        let qrCodeData = null;
-        if (cardData.deliveryMethod === 'qr-code') {
-          const qrTimestamp = Date.now();
-          const qrToken = btoa(`${cardId}:${qrTimestamp}`);
-          const qrUrl = `${cardUrl}?qr=${qrToken}`;
-
-          console.log('📱 QR Code URL generated:', qrUrl);
-          console.log('📱 QR Token:', qrToken);
-
-          qrCodeData = {
-            url: qrUrl,
-            token: qrToken,
-            imageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-              qrUrl
-            )}&bgcolor=ffffff&color=000000&margin=20&format=png`,
-          };
-
-          console.log('📱 QR Code data:', qrCodeData);
-        }
-
-        // Generate magic link for magic-link delivery method
-        let magicLinkData = null;
-        if (cardData.deliveryMethod === 'magic-link') {
-          const magicTimestamp = Date.now();
-          const magicToken = btoa(
-            `${cardId}:${magicTimestamp}:${recipientEmail}`
-          );
-          magicLinkData = `${cardUrl}?token=${magicToken}`;
-          console.log('🔗 Magic Link generated:', magicLinkData);
-        }
-
-        // Mock successful response
-        const mockResult = {
-          success: true,
-          cardId: cardId,
-          cardUrl: cardUrl,
-          message:
-            cardData.deliveryMethod === 'magic-link'
-              ? 'Magic link ready!'
-              : 'QR code generated successfully!',
-          ...(cardData.deliveryMethod === 'magic-link' && {
-            emailSent: true,
-            magicLink: magicLinkData,
-          }),
-          ...(cardData.deliveryMethod === 'qr-code' && {
-            qrCode: qrCodeData,
-          }),
-        };
-
-        console.log('✅ Mock result prepared:', mockResult);
-
-        // Simulate API delay
-        console.log('⏳ Simulating API delay...');
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        console.log('🎉 Setting generated card state...');
-        setGeneratedCard(mockResult);
-        console.log('✅ Card creation completed successfully!');
       } else {
         console.log(
           '🌍 Production mode: Should call real API (but localStorage version will mock it)'
         );
-        // Production mode: Call real API
-        const response = await fetch('/api/create-card', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(cardData),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          setGeneratedCard(result);
-          console.log('✅ Card created successfully!', result);
-        } else {
-          alert(`❌ Error: ${result.error}`);
-        }
       }
+
+      // Create clean card URL - no parameters in URL
+      const baseUrl = window.location.origin;
+      const cardUrl = `${baseUrl}/card/${cardId}`;
+      console.log('🔗 Generated card URL:', cardUrl);
+
+      console.log('🔄 Starting authentication data generation...');
+
+      // Generate authentication data based on delivery method
+      let qrCodeData = null;
+      let magicLinkData = null;
+
+      if (cardData.deliveryMethod === 'qr-code') {
+        console.log('📱 Processing QR code delivery method...');
+        const qrTimestamp = Date.now();
+        const qrToken = btoa(`${cardId}:${qrTimestamp}`);
+        const qrUrl = `${cardUrl}?qr=${qrToken}`;
+
+        console.log('📱 QR Code URL generated:', qrUrl);
+        console.log('📱 QR Token:', qrToken);
+
+        qrCodeData = {
+          url: qrUrl,
+          token: qrToken,
+          imageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
+            qrUrl
+          )}&bgcolor=ffffff&color=000000&margin=20&format=png`,
+        };
+
+        console.log('📱 QR Code data:', qrCodeData);
+      }
+
+      if (cardData.deliveryMethod === 'magic-link') {
+        console.log('🔗 Processing magic link delivery method...');
+        const magicTimestamp = Date.now();
+        const magicToken = btoa(
+          `${cardId}:${magicTimestamp}:${recipientEmail}`
+        );
+        magicLinkData = `${cardUrl}?token=${magicToken}`;
+        console.log('🔗 Magic Link generated:', magicLinkData);
+      }
+
+      console.log('🔄 Preparing mock result...');
+
+      // Mock successful response
+      const mockResult = {
+        success: true,
+        cardId: cardId,
+        cardUrl: cardUrl,
+        message:
+          cardData.deliveryMethod === 'magic-link'
+            ? 'Magic link ready!'
+            : 'QR code generated successfully!',
+        ...(cardData.deliveryMethod === 'magic-link' && {
+          emailSent: true,
+          magicLink: magicLinkData,
+        }),
+        ...(cardData.deliveryMethod === 'qr-code' && {
+          qrCode: qrCodeData,
+        }),
+      };
+
+      console.log('✅ Mock result prepared:', mockResult);
+
+      // Simulate API delay
+      console.log('⏳ Simulating API delay...');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      console.log('🎉 Setting generated card state...');
+      console.log('🎉 About to call setGeneratedCard with:', mockResult);
+
+      setGeneratedCard(mockResult);
+
+      // Add a small delay to verify state was set
+      setTimeout(() => {
+        console.log('🔍 Checking if generatedCard state was set...');
+        // We can't log the state directly here, but we can check if the success screen appears
+      }, 100);
+
+      console.log('✅ Card creation completed successfully!');
     } catch (error) {
       console.error('❌ Error in generateCard:', error);
       console.error(
         '❌ Error stack:',
         error instanceof Error ? error.stack : 'No stack trace'
       );
-      alert('Failed to create birthday card. Please try again!');
+      alert(
+        `Failed to create birthday card: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     } finally {
       console.log('🔄 Setting isGenerating to false');
       setIsGenerating(false);
