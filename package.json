@@ -5,12 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
+    "dev:api": "vercel dev",
     "build": "vite build",
     "preview": "vite preview",
-    "generate": "tsc --project tsconfig.scripts.json && node dist-scripts/generate.js",
-    "deploy:vercel": "pnpm run generate && vercel --prod",
-    "deploy:netlify": "pnpm run generate && netlify deploy --prod",
-    "prebuild": "pnpm run generate"
+    "deploy:vercel": "vercel --prod"
   },
   "dependencies": {
     "framer-motion": "^11.18.2",
