@@ -396,8 +396,10 @@ export default function SimpleCardCreator() {
                   recipientEmail: '',
                 });
                 setShowSuccess(false);
+                setShowPreview(false); // Add this line - ensure we're not stuck in preview
                 setCreateResponse(null);
                 setErrors({});
+                setIsSubmitting(false); // Add this line - reset submitting state
               }}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
             >
