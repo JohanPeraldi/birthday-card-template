@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { ArrowLeft, Upload, X, Eye, Send, Mail, QrCode } from 'lucide-react';
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Eye,
+  Send,
+  Mail,
+  QrCode,
+  CheckCircle,
+  Download,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface FormData {
@@ -12,6 +22,15 @@ interface FormData {
   customImagePreview?: string;
   deliveryMethod: 'email' | 'qr';
   recipientEmail: string;
+}
+
+interface CreateCardResponse {
+  success: boolean;
+  cardId: string;
+  accessUrl: string;
+  qrCodeUrl?: string;
+  magicLinkSent?: boolean;
+  message: string;
 }
 
 const themes = {
@@ -39,6 +58,9 @@ export default function SimpleCardCreator() {
   });
 
   const [showPreview, setShowPreview] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [createResponse, setCreateResponse] =
+    useState<CreateCardResponse | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -114,8 +136,6 @@ export default function SimpleCardCreator() {
       newErrors.senderName = 'Your name must be 30 characters or less';
     }
 
-    // Image is now optional - users can choose
-
     if (formData.deliveryMethod === 'email') {
       if (!formData.recipientEmail.trim()) {
         newErrors.recipientEmail = 'Email is required';
@@ -139,22 +159,282 @@ export default function SimpleCardCreator() {
 
     setIsSubmitting(true);
     try {
-      // Here we'll integrate with the API in future issues
-      console.log('🎉 Creating card with data:', formData);
+      console.log('🚀 Submitting card creation request...');
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Prepare the request payload
+      const requestData = {
+        cardTitle: formData.cardTitle,
+        recipientName: formData.recipientName,
+        message: formData.message,
+        senderName: formData.senderName,
+        theme: formData.theme,
+        customImage: formData.customImagePreview, // base64 encoded image
+        deliveryMethod: formData.deliveryMethod,
+        recipientEmail:
+          formData.deliveryMethod === 'email'
+            ? formData.recipientEmail
+            : undefined,
+      };
 
-      alert(
-        'Card created successfully! 🎉\n\nThis will be replaced with actual card generation.'
-      );
+      console.log('📤 Request data:', {
+        ...requestData,
+        customImage: requestData.customImage ? '[IMAGE_DATA]' : undefined,
+      });
+
+      // Call the API
+      const response = await fetch('/api/cards/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const result = await response.json();
+      console.log('📥 API Response:', result);
+
+      if (response.ok && result.success) {
+        setCreateResponse(result);
+        setShowSuccess(true);
+        console.log('✅ Card created successfully!', result);
+      } else {
+        // Handle API errors
+        const errorMessage =
+          result.details?.join(', ') || result.error || 'Failed to create card';
+        setErrors({ submit: errorMessage });
+        console.error('❌ Card creation failed:', result);
+      }
     } catch (error) {
-      console.error('Submission error:', error);
-      alert('There was an error creating your card. Please try again.');
+      console.error('❌ Network error:', error);
+      setErrors({
+        submit: 'Network error. Please check your connection and try again.',
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const downloadQRCode = () => {
+    if (createResponse?.qrCodeUrl) {
+      const link = document.createElement('a');
+      link.download = `${formData.recipientName}-birthday-card-qr.png`;
+      link.href = createResponse.qrCodeUrl;
+      link.click();
+    }
+  };
+
+  const copyCardLink = async () => {
+    if (createResponse?.accessUrl) {
+      try {
+        await navigator.clipboard.writeText(createResponse.accessUrl);
+        alert('Card link copied to clipboard!');
+      } catch (error) {
+        console.error('Failed to copy link:', error);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = createResponse.accessUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('Card link copied to clipboard!');
+      }
+    }
+  };
+
+  // Success page
+  if (showSuccess && createResponse) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-2xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-10 h-10 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              🎉 Card Created Successfully!
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Your birthday card for <strong>{formData.recipientName}</strong>{' '}
+              is ready!
+            </p>
+          </div>
+
+          {/* Success message */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
+            <div className="text-center">
+              <p className="text-green-700 font-medium mb-4">
+                {createResponse.message}
+              </p>
+
+              {/* Email delivery success */}
+              {formData.deliveryMethod === 'email' &&
+                createResponse.magicLinkSent && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+                    <div className="flex items-center justify-center gap-2 text-green-700 mb-2">
+                      <Mail className="w-5 h-5" />
+                      <span className="font-semibold">Magic Link Sent!</span>
+                    </div>
+                    <p className="text-green-600 mb-2">
+                      A secure link has been sent to{' '}
+                      <strong>{formData.recipientEmail}</strong>
+                    </p>
+                    <p className="text-sm text-green-600">
+                      The recipient can click the link to view their birthday
+                      surprise!
+                    </p>
+                  </div>
+                )}
+
+              {/* QR code delivery success */}
+              {formData.deliveryMethod === 'qr' && createResponse.qrCodeUrl && (
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-center justify-center gap-2 text-indigo-700 mb-4">
+                    <QrCode className="w-5 h-5" />
+                    <span className="font-semibold">QR Code Generated!</span>
+                  </div>
+
+                  <div className="mb-4">
+                    <img
+                      src={createResponse.qrCodeUrl}
+                      alt="QR Code for Birthday Card"
+                      className="mx-auto rounded-lg shadow-md"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 justify-center">
+                    <button
+                      onClick={downloadQRCode}
+                      className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download QR Code
+                    </button>
+                    <button
+                      onClick={copyCardLink}
+                      className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                    >
+                      📋 Copy Link
+                    </button>
+                  </div>
+
+                  <p className="text-sm text-indigo-600 mt-4">
+                    Share this QR code with {formData.recipientName} - they can
+                    scan it with their phone camera!
+                  </p>
+                </div>
+              )}
+
+              {/* Email failure fallback */}
+              {formData.deliveryMethod === 'email' &&
+                !createResponse.magicLinkSent && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+                    <div className="flex items-center justify-center gap-2 text-yellow-700 mb-2">
+                      <Mail className="w-5 h-5" />
+                      <span className="font-semibold">
+                        Email Delivery Issue
+                      </span>
+                    </div>
+                    <p className="text-yellow-600 mb-4">
+                      Your card was created successfully, but we couldn't send
+                      the email automatically.
+                    </p>
+                    <button
+                      onClick={copyCardLink}
+                      className="bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
+                    >
+                      📋 Copy Link to Share Manually
+                    </button>
+                  </div>
+                )}
+            </div>
+          </div>
+
+          {/* Card details summary */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 className="font-semibold text-gray-900 mb-4">Card Details</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Card ID:</span>
+                <span className="font-mono text-gray-800">
+                  {createResponse.cardId}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">For:</span>
+                <span className="font-medium">{formData.recipientName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">From:</span>
+                <span className="font-medium">{formData.senderName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Theme:</span>
+                <span className="capitalize">
+                  {themes[formData.theme].name}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Delivery:</span>
+                <span className="capitalize">{formData.deliveryMethod}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => {
+                // Reset all form state to start fresh
+                setFormData({
+                  cardTitle: '',
+                  recipientName: '',
+                  message: '',
+                  senderName: '',
+                  theme: 'purple',
+                  deliveryMethod: 'email',
+                  recipientEmail: '',
+                });
+                setShowSuccess(false);
+                setCreateResponse(null);
+                setErrors({});
+              }}
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+            >
+              Create Another Card
+            </button>
+            <Link
+              to="/"
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              Back to Home
+            </Link>
+          </div>
+
+          {/* Development info */}
+          <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-semibold text-blue-800 mb-2">
+              🎯 Issue #9 Complete - Dynamic Card Generation API
+            </h4>
+            <p className="text-blue-700 text-sm mb-2">
+              Your card was created using the new dynamic API system! This
+              replaces the old config file approach.
+            </p>
+            <div className="text-xs text-blue-600">
+              <p>
+                <strong>Next:</strong> Issue #10 will add database storage for
+                persistence
+              </p>
+              <p>
+                <strong>Note:</strong> Cards are currently stored in memory and
+                will reset when the server restarts
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showPreview) {
     return (
@@ -163,6 +443,7 @@ export default function SimpleCardCreator() {
         onBack={() => setShowPreview(false)}
         onSend={handleSubmit}
         isSubmitting={isSubmitting}
+        submitError={errors.submit}
       />
     );
   }
@@ -485,6 +766,14 @@ Wishing you all the happiness in the world ✨"
             )}
           </div>
 
+          {/* Submit Error */}
+          {errors.submit && (
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 font-medium">Error Creating Card</p>
+              <p className="text-red-600 text-sm mt-1">{errors.submit}</p>
+            </div>
+          )}
+
           {/* Action Button */}
           <div className="mt-8 pt-6 border-t border-gray-200">
             <button
@@ -508,11 +797,13 @@ function CardPreview({
   onBack,
   onSend,
   isSubmitting,
+  submitError,
 }: {
   formData: FormData;
   onBack: () => void;
   onSend: () => void;
   isSubmitting: boolean;
+  submitError?: string;
 }) {
   const selectedTheme = themes[formData.theme];
 
@@ -602,12 +893,23 @@ function CardPreview({
           </div>
         </div>
 
+        {/* Submit Error */}
+        {submitError && (
+          <div className="max-w-md mx-auto mb-8">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 font-medium">Error Creating Card</p>
+              <p className="text-red-600 text-sm mt-1">{submitError}</p>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-4 justify-center">
           <button
             type="button"
             onClick={onBack}
-            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            disabled={isSubmitting}
+            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
           >
             ← Edit Card
           </button>

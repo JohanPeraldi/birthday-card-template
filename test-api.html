@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Birthday Card API Test</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .test-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #f9f9f9;
+      }
+      .test-section h2 {
+        color: #7c3aed;
+        margin-top: 0;
+      }
+      button {
+        background: #7c3aed;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 5px;
+      }
+      button:hover {
+        background: #6d28d9;
+      }
+      button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+      .result {
+        margin-top: 15px;
+        padding: 15px;
+        border-radius: 6px;
+        background: white;
+        border: 1px solid #ddd;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .success {
+        border-color: #10b981;
+        background: #f0fdf4;
+      }
+      .error {
+        border-color: #ef4444;
+        background: #fef2f2;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      textarea {
+        height: 80px;
+        resize: vertical;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎉 Birthday Card API Test Suite</h1>
+      <p style="text-align: center; color: #666; margin-bottom: 40px">
+        Test the new dynamic card generation API (Issue #9)
+      </p>
+
+      <!-- Test 1: Create Card with Email -->
+      <div class="test-section">
+        <h2>Test 1: Create Card with Email Delivery</h2>
+
+        <div class="grid">
+          <div class="form-group">
+            <label for="emailCardTitle">Card Title:</label>
+            <input
+              type="text"
+              id="emailCardTitle"
+              value="Happy Birthday!"
+              maxlength="50"
+            />
+          </div>
+          <div class="form-group">
+            <label for="emailRecipientName">Recipient Name:</label>
+            <input
+              type="text"
+              id="emailRecipientName"
+              value="Test User"
+              maxlength="30"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="emailMessage">Message:</label>
+          <textarea id="emailMessage" maxlength="300">
+Hope your special day is amazing! 🎂
+
+This is a test card created through the new API system.
+
+Have a wonderful birthday!</textarea
+          >
+        </div>
+
+        <div class="grid">
+          <div class="form-group">
+            <label for="emailSenderName">Sender Name:</label>
+            <input
+              type="text"
+              id="emailSenderName"
+              value="API Test"
+              maxlength="30"
+            />
+          </div>
+          <div class="form-group">
+            <label for="emailTheme">Theme:</label>
+            <select id="emailTheme">
+              <option value="purple">Classic Purple</option>
+              <option value="yellow">Sunny Yellow</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="recipientEmail">Recipient Email:</label>
+          <input type="email" id="recipientEmail" value="test@example.com" />
+        </div>
+
+        <button onclick="testEmailCard()" id="emailTestBtn">
+          📧 Test Email Card Creation
+        </button>
+
+        <div id="emailResult" class="result" style="display: none"></div>
+      </div>
+
+      <!-- Test 2: Create Card with QR Code -->
+      <div class="test-section">
+        <h2>Test 2: Create Card with QR Code Delivery</h2>
+
+        <div class="grid">
+          <div class="form-group">
+            <label for="qrCardTitle">Card Title:</label>
+            <input
+              type="text"
+              id="qrCardTitle"
+              value="Happy Birthday QR!"
+              maxlength="50"
+            />
+          </div>
+          <div class="form-group">
+            <label for="qrRecipientName">Recipient Name:</label>
+            <input
+              type="text"
+              id="qrRecipientName"
+              value="QR Test User"
+              maxlength="30"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="qrMessage">Message:</label>
+          <textarea id="qrMessage" maxlength="300">
+Scan this QR code to see your birthday surprise! 📱
+
+This card was generated dynamically through our new API.
+
+Hope you have an amazing day!</textarea
+          >
+        </div>
+
+        <div class="grid">
+          <div class="form-group">
+            <label for="qrSenderName">Sender Name:</label>
+            <input
+              type="text"
+              id="qrSenderName"
+              value="QR Test"
+              maxlength="30"
+            />
+          </div>
+          <div class="form-group">
+            <label for="qrTheme">Theme:</label>
+            <select id="qrTheme">
+              <option value="yellow">Sunny Yellow</option>
+              <option value="purple">Classic Purple</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="testQRCard()" id="qrTestBtn">
+          📱 Test QR Card Creation
+        </button>
+
+        <div id="qrResult" class="result" style="display: none"></div>
+        <div
+          id="qrImageContainer"
+          style="text-align: center; margin-top: 15px"
+        ></div>
+      </div>
+
+      <!-- Test 3: Validation Tests -->
+      <div class="test-section">
+        <h2>Test 3: Validation Tests</h2>
+        <p>
+          Test various validation scenarios to ensure the API handles errors
+          properly.
+        </p>
+
+        <button onclick="testEmptyData()">❌ Test Empty Data</button>
+        <button onclick="testLongStrings()">📝 Test Long Strings</button>
+        <button onclick="testInvalidEmail()">📧 Test Invalid Email</button>
+        <button onclick="testInvalidTheme()">🎨 Test Invalid Theme</button>
+
+        <div id="validationResult" class="result" style="display: none"></div>
+      </div>
+
+      <!-- Test 4: Card Retrieval -->
+      <div class="test-section">
+        <h2>Test 4: Card Retrieval (Demo)</h2>
+        <p>
+          Test retrieving a card by ID (will return demo data since we're using
+          in-memory storage).
+        </p>
+
+        <div class="form-group">
+          <label for="retrieveCardId">Card ID:</label>
+          <input
+            type="text"
+            id="retrieveCardId"
+            placeholder="Enter card ID from creation test"
+          />
+        </div>
+
+        <button onclick="testCardRetrieval()">🔍 Test Card Retrieval</button>
+
+        <div id="retrievalResult" class="result" style="display: none"></div>
+      </div>
+
+      <!-- Test Results Summary -->
+      <div class="test-section" style="background: #e0e7ff">
+        <h2>📊 Test Results Summary</h2>
+        <div id="testSummary">
+          <p>Run tests above to see results...</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let testResults = {
+        passed: 0,
+        failed: 0,
+        tests: [],
+      };
+
+      function updateSummary() {
+        const summary = document.getElementById('testSummary');
+        summary.innerHTML = `
+                <p><strong>Tests Run:</strong> ${testResults.tests.length}</p>
+                <p><strong>✅ Passed:</strong> ${testResults.passed}</p>
+                <p><strong>❌ Failed:</strong> ${testResults.failed}</p>
+                <div style="margin-top: 10px;">
+                    ${testResults.tests
+                      .map(
+                        (test) =>
+                          `<div style="margin: 5px 0;">
+                            ${test.passed ? '✅' : '❌'} ${test.name}: ${
+                            test.result
+                          }
+                        </div>`
+                      )
+                      .join('')}
+                </div>
+            `;
+      }
+
+      function addTestResult(name, passed, result) {
+        testResults.tests.push({ name, passed, result });
+        if (passed) {
+          testResults.passed++;
+        } else {
+          testResults.failed++;
+        }
+        updateSummary();
+      }
+
+      async function testEmailCard() {
+        const btn = document.getElementById('emailTestBtn');
+        const result = document.getElementById('emailResult');
+
+        btn.disabled = true;
+        btn.textContent = '📧 Creating Card...';
+        result.style.display = 'block';
+        result.className = 'result';
+        result.textContent = 'Creating card...';
+
+        try {
+          const data = {
+            cardTitle: document.getElementById('emailCardTitle').value,
+            recipientName: document.getElementById('emailRecipientName').value,
+            message: document.getElementById('emailMessage').value,
+            senderName: document.getElementById('emailSenderName').value,
+            theme: document.getElementById('emailTheme').value,
+            deliveryMethod: 'email',
+            recipientEmail: document.getElementById('recipientEmail').value,
+          };
+
+          console.log('📤 Sending email card request:', data);
+
+          const response = await fetch('/api/cards/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+
+          const responseData = await response.json();
+          console.log('📥 Email card response:', responseData);
+
+          if (response.ok && responseData.success) {
+            result.className = 'result success';
+            result.textContent = `✅ SUCCESS!\n\n${JSON.stringify(
+              responseData,
+              null,
+              2
+            )}`;
+
+            // Store card ID for retrieval test
+            document.getElementById('retrieveCardId').value =
+              responseData.cardId;
+
+            addTestResult(
+              'Email Card Creation',
+              true,
+              'Card created successfully'
+            );
+          } else {
+            result.className = 'result error';
+            result.textContent = `❌ FAILED!\n\n${JSON.stringify(
+              responseData,
+              null,
+              2
+            )}`;
+            addTestResult(
+              'Email Card Creation',
+              false,
+              responseData.error || 'Unknown error'
+            );
+          }
+        } catch (error) {
+          result.className = 'result error';
+          result.textContent = `❌ NETWORK ERROR!\n\n${error.message}`;
+          addTestResult(
+            'Email Card Creation',
+            false,
+            'Network error: ' + error.message
+          );
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '📧 Test Email Card Creation';
+        }
+      }
+
+      async function testQRCard() {
+        const btn = document.getElementById('qrTestBtn');
+        const result = document.getElementById('qrResult');
+        const imageContainer = document.getElementById('qrImageContainer');
+
+        btn.disabled = true;
+        btn.textContent = '📱 Creating Card...';
+        result.style.display = 'block';
+        result.className = 'result';
+        result.textContent = 'Creating card...';
+        imageContainer.innerHTML = '';
+
+        try {
+          const data = {
+            cardTitle: document.getElementById('qrCardTitle').value,
+            recipientName: document.getElementById('qrRecipientName').value,
+            message: document.getElementById('qrMessage').value,
+            senderName: document.getElementById('qrSenderName').value,
+            theme: document.getElementById('qrTheme').value,
+            deliveryMethod: 'qr',
+          };
+
+          console.log('📤 Sending QR card request:', data);
+
+          const response = await fetch('/api/cards/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+
+          const responseData = await response.json();
+          console.log('📥 QR card response:', responseData);
+
+          if (response.ok && responseData.success) {
+            result.className = 'result success';
+            result.textContent = `✅ SUCCESS!\n\n${JSON.stringify(
+              responseData,
+              null,
+              2
+            )}`;
+
+            // Display QR code if available
+            if (responseData.qrCodeUrl) {
+              imageContainer.innerHTML = `
+                            <h3>Generated QR Code:</h3>
+                            <img src="${responseData.qrCodeUrl}" alt="QR Code" style="border: 1px solid #ddd; border-radius: 8px;">
+                            <p><small>Scan this QR code to test card access!</small></p>
+                        `;
+            }
+
+            addTestResult(
+              'QR Card Creation',
+              true,
+              'Card and QR code created successfully'
+            );
+          } else {
+            result.className = 'result error';
+            result.textContent = `❌ FAILED!\n\n${JSON.stringify(
+              responseData,
+              null,
+              2
+            )}`;
+            addTestResult(
+              'QR Card Creation',
+              false,
+              responseData.error || 'Unknown error'
+            );
+          }
+        } catch (error) {
+          result.className = 'result error';
+          result.textContent = `❌ NETWORK ERROR!\n\n${error.message}`;
+          addTestResult(
+            'QR Card Creation',
+            false,
+            'Network error: ' + error.message
+          );
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '📱 Test QR Card Creation';
+        }
+      }
+
+      async function testEmptyData() {
+        await runValidationTest('Empty Data', {});
+      }
+
+      async function testLongStrings() {
+        await runValidationTest('Long Strings', {
+          cardTitle:
+            'This is a very long card title that exceeds the 50 character limit',
+          recipientName:
+            'This is a very long recipient name that exceeds the 30 character limit',
+          message: 'A'.repeat(301), // Exceeds 300 character limit
+          senderName:
+            'This is a very long sender name that exceeds the 30 character limit',
+          theme: 'purple',
+          deliveryMethod: 'email',
+          recipientEmail: 'test@example.com',
+        });
+      }
+
+      async function testInvalidEmail() {
+        await runValidationTest('Invalid Email', {
+          cardTitle: 'Test',
+          recipientName: 'Test',
+          message: 'Test message',
+          senderName: 'Test',
+          theme: 'purple',
+          deliveryMethod: 'email',
+          recipientEmail: 'invalid-email',
+        });
+      }
+
+      async function testInvalidTheme() {
+        await runValidationTest('Invalid Theme', {
+          cardTitle: 'Test',
+          recipientName: 'Test',
+          message: 'Test message',
+          senderName: 'Test',
+          theme: 'invalid-theme',
+          deliveryMethod: 'email',
+          recipientEmail: 'test@example.com',
+        });
+      }
+
+      async function runValidationTest(testName, data) {
+        const result = document.getElementById('validationResult');
+        result.style.display = 'block';
+        result.className = 'result';
+        result.textContent = `Running ${testName} test...`;
+
+        try {
+          const response = await fetch('/api/cards/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+
+          const responseData = await response.json();
+
+          if (response.status === 400 && !responseData.success) {
+            result.className = 'result success';
+            result.textContent = `✅ ${testName} - VALIDATION WORKING!\n\n${JSON.stringify(
+              responseData,
+              null,
+              2
+            )}`;
+            addTestResult(
+              testName + ' Validation',
+              true,
+              'Validation errors caught correctly'
+            );
+          } else {
+            result.className = 'result error';
+            result.textContent = `❌ ${testName} - VALIDATION FAILED!\nExpected validation error, but got:\n\n${JSON.stringify(
+              responseData,
+              null,
+              2
+            )}`;
+            addTestResult(
+              testName + ' Validation',
+              false,
+              "Validation should have failed but didn't"
+            );
+          }
+        } catch (error) {
+          result.className = 'result error';
+          result.textContent = `❌ ${testName} - NETWORK ERROR!\n\n${error.message}`;
+          addTestResult(
+            testName + ' Validation',
+            false,
+            'Network error: ' + error.message
+          );
+        }
+      }
+
+      async function testCardRetrieval() {
+        const cardId = document.getElementById('retrieveCardId').value;
+        const result = document.getElementById('retrievalResult');
+
+        if (!cardId) {
+          result.style.display = 'block';
+          result.className = 'result error';
+          result.textContent =
+            'Please enter a card ID first (create a card above to get one)';
+          return;
+        }
+
+        result.style.display = 'block';
+        result.className = 'result';
+        result.textContent = 'Retrieving card...';
+
+        try {
+          const response = await fetch(
+            `/api/cards/${cardId}?token=demo-token`,
+            {
+              method: 'GET',
+            }
+          );
+
+          const responseData = await response.json();
+
+          if (response.ok && responseData.success) {
+            result.className = 'result success';
+            result.textContent = `✅ CARD RETRIEVED!\n\n${JSON.stringify(
+              responseData,
+              null,
+              2
+            )}`;
+            addTestResult(
+              'Card Retrieval',
+              true,
+              'Card retrieved successfully'
+            );
+          } else {
+            result.className = 'result error';
+            result.textContent = `❌ RETRIEVAL FAILED!\n\n${JSON.stringify(
+              responseData,
+              null,
+              2
+            )}`;
+            addTestResult(
+              'Card Retrieval',
+              false,
+              responseData.error || 'Unknown error'
+            );
+          }
+        } catch (error) {
+          result.className = 'result error';
+          result.textContent = `❌ NETWORK ERROR!\n\n${error.message}`;
+          addTestResult(
+            'Card Retrieval',
+            false,
+            'Network error: ' + error.message
+          );
+        }
+      }
+
+      // Auto-populate test data on page load
+      window.onload = function () {
+        console.log('🧪 Birthday Card API Test Suite loaded');
+        console.log('Ready to test Issue #9 implementation!');
+      };
+    </script>
+  </body>
+</html>

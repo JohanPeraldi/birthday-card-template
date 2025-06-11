@@ -11,10 +11,11 @@
     "jsx": "preserve",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "baseUrl": ".",
     "types": ["vite"],
+    "target": "es2020",
+    "downlevelIteration": true,
     "paths": {
       "@/*": ["src/*"]
     }
